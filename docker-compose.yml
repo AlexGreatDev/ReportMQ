@@ -1,0 +1,42 @@
+ version: '3.7'
+
+services:
+  mongo:
+    image: mongo:latest
+    ports:
+      - "27017:27017"
+    networks:
+      - app-network
+
+  rabbitmq:
+    image: "rabbitmq:management"
+    ports:
+      - "15672:15672"
+      - "5672:5672"
+    networks:
+      - app-network
+
+  invoice-service:
+    build: ./invoice-service
+    environment:
+      - MONGO_URI=mongodb://mongo:27017/invoices
+      - RABBITMQ_URI=amqp://rabbitmq:5672
+    depends_on:
+      - mongo
+      - rabbitmq
+    networks:
+      - app-network
+
+  email-sender-service:
+    build: ./email-sender-service
+    environment:
+      - RABBITMQ_URI=amqp://rabbitmq:5672
+    depends_on:
+      - rabbitmq
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
+
